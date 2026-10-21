@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
  * Tiny System One smoke: 1 note × 2 tags via Noul.
- * Uses JEV_SABRINA_API_KEY or TYPESAFE_API_KEY from env — never hardcode.
+ * Uses SYSTEMONE_API_KEY from env — never hardcode.
  */
-const key = process.env.JEV_SABRINA_API_KEY || process.env.TYPESAFE_API_KEY;
+const key = process.env.SYSTEMONE_API_KEY;
 const base = (process.env.TYPESAFE_BASE_URL || "https://api.typesafe.ai").replace(/\/+$/, "");
 const model = process.env.TYPESAFE_MODEL || "jev-1.14.0";
 
 if (!key) {
-  console.error("Set JEV_SABRINA_API_KEY or TYPESAFE_API_KEY");
+  console.error("Set SYSTEMONE_API_KEY");
   process.exit(1);
 }
 
