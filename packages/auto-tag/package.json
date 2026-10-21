@@ -1,0 +1,30 @@
+{
+  "name": "obsidian-systemone-auto-tag",
+  "version": "0.1.0",
+  "description": "Kaku-style probabilistic auto tagging for Obsidian via System One (Noul)",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "smoke": "node scripts/smoke-systemone.mjs"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "tags",
+    "systemone",
+    "jev"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "esbuild": "^0.25.0",
+    "js-yaml": "^4.3.2",
+    "obsidian": "^1.7.2",
+    "tslib": "^2.8.0",
+    "typescript": "^5.7.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

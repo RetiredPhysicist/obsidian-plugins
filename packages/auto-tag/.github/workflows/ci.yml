@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Typecheck and build
+        run: npm run build
+
+      - name: Unit tests
+        run: node test/run-tests.mjs
+
+      # A build that renames or adds an output leaves the tracked files alone,
+      # so `git diff` alone would pass on a stale committed bundle.
+      - name: The build leaves the working tree clean
+        run: |
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            git status --porcelain --untracked-files=all
+            echo "rebuild and commit the bundle"
+            exit 1
+          fi
+
+      - name: Manifest and package agree on the version
+        run: |
+          node <<'JS'
+          const fs = require("fs");
+          const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+          const versions = JSON.parse(fs.readFileSync("versions.json", "utf8"));
+          const problems = [];
+          for (const key of ["id", "name", "version", "minAppVersion", "description", "author"])
+            if (!manifest[key]) problems.push(`manifest.json has no ${key}`);
+          if (manifest.version !== pkg.version)
+            problems.push(`manifest version ${manifest.version} != package version ${pkg.version}`);
+          if (versions[manifest.version] !== manifest.minAppVersion)
+            problems.push(`versions.json[${manifest.version}] != minAppVersion ${manifest.minAppVersion}`);
+          if (problems.length) { console.error(problems.join("\n")); process.exit(1); }
+          console.log("manifest ok:", manifest.id, manifest.version);
+          JS
+
+      - name: The bundle ships no source map
+        run: |
+          if grep -q "sourceMappingURL" main.js; then
+            echo "main.js carries a source map; production builds must not"
+            exit 1
+          fi

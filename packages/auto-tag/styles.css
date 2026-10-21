@@ -1,0 +1,260 @@
+.s1at-root {
+  padding: 12px 16px 24px;
+  overflow: auto;
+  height: 100%;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.s1at-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.s1at-status {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--background-modifier-hover);
+}
+
+.s1at-status.is-live {
+  background: color-mix(in srgb, #3b82f6 22%, var(--background-modifier-hover));
+  color: #1d4ed8;
+  animation: s1at-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes s1at-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.s1at-stats-line,
+.s1at-muted {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.s1at-label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.s1at-toolbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.s1at-empty {
+  opacity: 0.7;
+  padding: 24px 0;
+}
+
+.s1at-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.s1at-batch {
+  margin-left: auto;
+}
+
+.s1at-scope-select {
+  max-width: 280px;
+  height: auto;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+/* —— candidate chips —— */
+.s1at-candidates {
+  margin-bottom: 10px;
+}
+
+.s1at-cand-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 6px 0 4px;
+}
+
+.s1at-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.s1at-chip-in {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 4px 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.s1at-chip-x {
+  cursor: pointer;
+  opacity: 0.45;
+  padding: 0 3px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.s1at-chip-x:hover {
+  opacity: 1;
+  color: var(--text-error);
+}
+
+.s1at-chip-input {
+  width: 84px;
+  font-size: 11px;
+  padding: 1px 6px;
+  height: auto;
+}
+
+/* —— result table —— */
+.s1at-tag-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  max-height: 480px;
+}
+
+.s1at-tag-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.s1at-tag-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 6px 8px;
+  background: var(--background-primary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.s1at-tag-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--background-modifier-border-hover);
+  vertical-align: middle;
+}
+
+.s1at-tag-table tr.is-active td {
+  background: color-mix(in srgb, #3b82f6 12%, transparent);
+}
+
+.s1at-tag-table tr.is-applied td {
+  opacity: 0.72;
+}
+
+.s1at-note-cell {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s1at-tagcell {
+  max-width: 420px;
+}
+
+.s1at-mini-chip {
+  display: inline-block;
+  margin: 1px 4px 1px 0;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.s1at-mini-chip.is-w {
+  background: color-mix(in srgb, #3b82f6 24%, transparent);
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.s1at-mini-chip.is-h {
+  background: color-mix(in srgb, #d97706 20%, transparent);
+  color: #92400e;
+}
+
+.s1at-mini-chip.is-existing {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.s1at-done {
+  color: #15803d;
+  font-weight: 600;
+}
+
+/* —— progress —— */
+.s1at-progress {
+  position: relative;
+  height: 6px;
+  margin: 0 0 10px;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+
+.s1at-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #3b82f6;
+  transition: width 0.25s ease-out;
+}
+
+.s1at-progress-fill.is-live {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 6px,
+    rgba(255, 255, 255, 0.28) 6px,
+    rgba(255, 255, 255, 0.28) 12px
+  );
+  background-size: 17px 17px;
+  animation: s1at-progress-move 0.6s linear infinite;
+}
+
+@keyframes s1at-progress-move {
+  from { background-position: 0 0; }
+  to { background-position: 17px 0; }
+}
+
+.s1at-progress-label {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.s1at-error {
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-error);
+  background: color-mix(in srgb, var(--text-error) 10%, transparent);
+  word-break: break-word;
+}
