@@ -1,0 +1,10 @@
+{
+  "id": "systemone-auto-move",
+  "name": "System One Auto Move",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Scan a folder, review the destination candidates System One proposes, then move the accepted files in one pass. Undo any run.",
+  "author": "holy-max",
+  "authorUrl": "https://github.com/holy-max",
+  "isDesktopOnly": false
+}
