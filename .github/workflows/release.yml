@@ -1,0 +1,167 @@
+# One release per plugin. Obsidian's community browser reads a repository's
+# releases by tag, so two plugins in one repository need tags that cannot
+# collide: `auto-move-v0.1.0` and `auto-tag-v0.1.0`.
+name: release
+
+on:
+  push:
+    tags:
+      - "auto-move-v*"
+      - "auto-tag-v*"
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: "Which plugin to release"
+        required: true
+        type: choice
+        options: [auto-move, auto-tag]
+      tag:
+        description: "Tag to create and release (e.g. auto-move-v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Two tags pushed together would otherwise race to create releases and, on a
+# dispatch, to push back to main. Queue them; each release is wanted.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: useblacksmith/checkout@v1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: packages/${{ inputs.plugin || (startsWith(github.ref_name, 'auto-move-') && 'auto-move' || 'auto-tag') }}/package-lock.json
+
+      # A dispatch names the plugin and the tag; a tag push derives both from
+      # the ref. Keeping the derivation in one step means the rest of the job
+      # reads two values and never re-parses the ref.
+      - name: Resolve plugin and version
+        id: meta
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_PLUGIN: ${{ inputs.plugin }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          if [ -n "$INPUT_PLUGIN" ]; then
+            plugin="$INPUT_PLUGIN"
+            tag="$INPUT_TAG"
+          else
+            case "$REF_NAME" in
+              auto-move-v*) plugin=auto-move ;;
+              auto-tag-v*)  plugin=auto-tag ;;
+              *) echo "::error::tag $REF_NAME names no plugin"; exit 1 ;;
+            esac
+            tag="$REF_NAME"
+          fi
+
+          # Quoted, because an unquoted expansion here is a glob pattern and
+          # `auto-*` would strip more than the literal prefix.
+          version="${tag#"${plugin}-v"}"
+          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::tag $tag does not carry an X.Y.Z version after ${plugin}-v"
+            exit 1
+          fi
+
+          {
+            echo "plugin=$plugin"
+            echo "tag=$tag"
+            echo "version=$version"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Install
+        working-directory: packages/${{ steps.meta.outputs.plugin }}
+        run: npm ci --no-audit --no-fund
+
+      # The release must ship the bundle this tag describes. Build from source
+      # and refuse when it differs from what was committed, otherwise the
+      # attached main.js can be a stale build of an older tree.
+      - name: Build and verify the committed bundle
+        working-directory: packages/${{ steps.meta.outputs.plugin }}
+        run: |
+          npm run build
+          if [ -n "$(git status --porcelain --untracked-files=all -- .)" ]; then
+            git status --porcelain --untracked-files=all -- .
+            echo "::error::the committed bundle does not match this tag's source"
+            exit 1
+          fi
+
+      # The tag is the version of record. A manifest that disagrees would make
+      # Obsidian install a build under the wrong version.
+      - name: Manifest, package and tag agree
+        working-directory: packages/${{ steps.meta.outputs.plugin }}
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          node <<'JS'
+          const fs = require("fs");
+          const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+          const versions = JSON.parse(fs.readFileSync("versions.json", "utf8"));
+          const want = process.env.VERSION;
+          const problems = [];
+          if (manifest.version !== want)
+            problems.push(`manifest.json version ${manifest.version} != tag ${want}`);
+          if (pkg.version !== want)
+            problems.push(`package.json version ${pkg.version} != tag ${want}`);
+          if (versions[want] !== manifest.minAppVersion)
+            problems.push(`versions.json[${want}] != minAppVersion ${manifest.minAppVersion}`);
+          if (problems.length) { console.error(problems.join("\n")); process.exit(1); }
+          console.log("release version confirmed:", want);
+          JS
+
+      # Obsidian loads main.js, manifest.json and styles.css from the release.
+      # A zip is offered too because the manual install path in the README
+      # copies a directory.
+      - name: Package the plugin
+        working-directory: packages/${{ steps.meta.outputs.plugin }}
+        env:
+          PLUGIN: ${{ steps.meta.outputs.plugin }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/dist"
+          cp main.js manifest.json styles.css "$RUNNER_TEMP/dist/"
+          ( cd "$RUNNER_TEMP/dist" && zip -q "${PLUGIN}-${VERSION}.zip" main.js manifest.json styles.css )
+          ls -l "$RUNNER_TEMP/dist"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLUGIN: ${{ steps.meta.outputs.plugin }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          title="$(node -p "require('./packages/${PLUGIN}/manifest.json').name") v${VERSION}"
+
+          # `--verify-tag` keeps a dispatch from silently inventing a tag that
+          # points at whatever main happens to be; that path creates the tag
+          # explicitly first.
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::release $TAG already exists"
+            exit 1
+          fi
+          if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            git tag "$TAG"
+            git push origin "refs/tags/$TAG"
+          fi
+
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$title" \
+            --generate-notes \
+            --verify-tag \
+            "$RUNNER_TEMP/dist/main.js" \
+            "$RUNNER_TEMP/dist/manifest.json" \
+            "$RUNNER_TEMP/dist/styles.css" \
+            "$RUNNER_TEMP/dist/${PLUGIN}-${VERSION}.zip"

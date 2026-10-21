@@ -9,7 +9,20 @@ Two [Obsidian](https://obsidian.md) plugins that use [System One](https://system
 
 ## Install
 
-Install from the community plugin browser, or copy a package's `main.js`, `manifest.json` and `styles.css` into `.obsidian/plugins/<plugin-id>/` and enable it in **Settings → Community plugins**.
+Download `main.js`, `manifest.json` and `styles.css` from the plugin's release, put them in `.obsidian/plugins/<plugin-id>/`, and enable the plugin in **Settings → Community plugins**. Each release also carries a zip of the three files for the same manual install.
+
+Releases are tagged per plugin — `auto-move-v0.1.0`, `auto-tag-v0.1.0` — so one plugin's version never implies the other's.
+
+## Release
+
+Bump `version` in the package's `package.json`, `manifest.json` and `versions.json`, commit, then push the tag:
+
+```bash
+git tag auto-move-v0.1.0
+git push origin auto-move-v0.1.0
+```
+
+The release workflow builds from source and fails when the committed bundle, the three version files and the tag disagree, so a tag cannot ship a stale or mislabelled build.
 
 ## Develop
 
