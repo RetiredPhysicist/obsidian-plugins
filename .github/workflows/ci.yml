@@ -1,9 +1,14 @@
-name: CI
+# Obsidian plugins: System One Auto Move and Auto Tag.
+#
+# Each plugin is its own npm package with its own manifest.json, so releases and
+# installs stay independent even though the source lives together here.
+name: obsidian-plugins
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,36 +18,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  # Two plugins, one matrix: a change to one must not block the other, and the
+  # runner spin-up is the expensive part.
+  plugins:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [auto-move, auto-tag]
     steps:
-      - uses: actions/checkout@v7
+      - uses: useblacksmith/checkout@v1
 
       - uses: actions/setup-node@v7
         with:
           node-version: 26
           cache: npm
+          cache-dependency-path: packages/${{ matrix.plugin }}/package-lock.json
 
-      - run: npm ci --no-audit --no-fund
+      - name: Install
+        working-directory: packages/${{ matrix.plugin }}
+        run: npm ci --no-audit --no-fund
 
       - name: Typecheck and build
+        working-directory: packages/${{ matrix.plugin }}
         run: npm run build
 
       - name: Unit tests
+        working-directory: packages/${{ matrix.plugin }}
         run: node test/run-tests.mjs
 
       # A build that renames or adds an output leaves the tracked files alone,
       # so `git diff` alone would pass on a stale committed bundle.
       - name: The build leaves the working tree clean
+        working-directory: packages/${{ matrix.plugin }}
         run: |
-          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
-            git status --porcelain --untracked-files=all
+          if [ -n "$(git status --porcelain --untracked-files=all -- .)" ]; then
+            git status --porcelain --untracked-files=all -- .
             echo "rebuild and commit the bundle"
             exit 1
           fi
 
       - name: Manifest and package agree on the version
+        working-directory: packages/${{ matrix.plugin }}
         run: |
           node <<'JS'
           const fs = require("fs");
@@ -61,6 +79,7 @@ jobs:
           JS
 
       - name: The bundle ships no source map
+        working-directory: packages/${{ matrix.plugin }}
         run: |
           if grep -q "sourceMappingURL" main.js; then
             echo "main.js carries a source map; production builds must not"
