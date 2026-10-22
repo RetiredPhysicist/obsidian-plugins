@@ -36,6 +36,15 @@ jobs:
           cache: npm
           cache-dependency-path: packages/${{ matrix.plugin }}/package-lock.json
 
+      # The npm cache setup-node restores goes over the network on a fresh VM.
+      # A sticky disk mounts the same directory in ~3s and has no size cap; the
+      # two coexist because a matrix leg keys its own lockfile.
+      - name: Mount the npm cache
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-npm-cache-${{ matrix.plugin }}
+          path: ~/.npm
+
       - name: Install
         working-directory: packages/${{ matrix.plugin }}
         run: npm ci --no-audit --no-fund
