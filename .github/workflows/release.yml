@@ -82,7 +82,7 @@ jobs:
 
       - name: Install
         working-directory: packages/${{ steps.meta.outputs.plugin }}
-        run: npm ci --no-audit --no-fund
+        run: npm ci --workspaces=false --no-audit --no-fund
 
       # The release must ship the bundle this tag describes. Build from source
       # and refuse when it differs from what was committed, otherwise the

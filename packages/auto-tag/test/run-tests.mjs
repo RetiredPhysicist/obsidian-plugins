@@ -8,7 +8,7 @@
  * Exit code 0 = all pass, 1 = failures.
  */
 import esbuild from "esbuild";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,6 +17,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const verbose = process.argv.includes("--verbose");
 // Under the project, not in tmp: the bundled modules import js-yaml by bare
 // name, and Node resolves that from the importer's directory upwards.
+mkdirSync(join(root, "node_modules"), { recursive: true });
 const outdir = mkdtempSync(join(root, "node_modules", ".s1at-test-"));
 
 const obsidianStub = {
