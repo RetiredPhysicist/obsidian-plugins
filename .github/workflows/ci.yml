@@ -47,7 +47,10 @@ jobs:
 
       - name: Install
         working-directory: packages/${{ matrix.plugin }}
-        run: npm ci --no-audit --no-fund
+        # Root package.json declares workspaces for Changesets; without
+        # --workspaces=false, npm ci hoists to the repo root and leaves
+        # packages/<plugin>/node_modules missing (auto-tag tests need it).
+        run: npm ci --workspaces=false --no-audit --no-fund
 
       - name: Typecheck and build
         working-directory: packages/${{ matrix.plugin }}

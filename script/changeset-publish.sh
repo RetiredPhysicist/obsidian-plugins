@@ -10,7 +10,7 @@ for dir in "$root"/packages/*/; do
   [ -f "$dir/package.json" ] || continue
   if node -e "const s=require(process.argv[1]).scripts||{}; process.exit(s.build?0:1)" "$dir/package.json"; then
     echo "Building $(basename "$dir")…"
-    (cd "$dir" && npm ci --no-audit --no-fund && npm run build)
+    (cd "$dir" && npm ci --workspaces=false --no-audit --no-fund && npm run build)
   fi
 done
 
