@@ -1,0 +1,48 @@
+name: Changeset Release
+
+on:
+  push:
+    branches: [main]
+
+# Do not cancel an in-flight publish if another main push lands.
+concurrency:
+  group: changeset-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Changesets needs full history to detect prior releases.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "26"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # Workspaces exist so Changesets can discover packages/*, but each
+      # package still owns its own lockfile for CI/tag release. Install only
+      # the root Changesets tooling here.
+      - name: Install Changesets (root only)
+        run: npm ci --workspaces=false --no-audit --no-fund
+
+      - name: Create Release Pull Request or Publish
+        uses: changesets/action@v1
+        with:
+          version: bash script/changeset-version.sh
+          publish: npm run release
+          title: "chore: version packages"
+          commit: "chore: version packages"
+          createGithubReleases: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
