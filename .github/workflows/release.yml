@@ -35,6 +35,8 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: useblacksmith/checkout@v1
 
@@ -135,6 +137,20 @@ jobs:
           ( cd "$RUNNER_TEMP/dist" && zip -q "${PLUGIN}-${VERSION}.zip" main.js manifest.json styles.css )
           ls -l "$RUNNER_TEMP/dist"
 
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: packages/${{ steps.meta.outputs.plugin }}
+          format: spdx-json
+          artifact-name: ${{ steps.meta.outputs.plugin }}-${{ steps.meta.outputs.version }}-sbom
+          output-file: ${{ runner.temp }}/dist/${{ steps.meta.outputs.plugin }}-${{ steps.meta.outputs.version }}-sbom.spdx.json
+
+      - name: Attest release zip provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ runner.temp }}/dist/${{ steps.meta.outputs.plugin }}-${{ steps.meta.outputs.version }}.zip
+
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -164,4 +180,4 @@ jobs:
             "$RUNNER_TEMP/dist/main.js" \
             "$RUNNER_TEMP/dist/manifest.json" \
             "$RUNNER_TEMP/dist/styles.css" \
-            "$RUNNER_TEMP/dist/${PLUGIN}-${VERSION}.zip"
+            "$RUNNER_TEMP/dist/${PLUGIN}-${VERSION}.zip"             "$RUNNER_TEMP/dist/${PLUGIN}-${VERSION}-sbom.spdx.json"

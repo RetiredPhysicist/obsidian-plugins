@@ -1,0 +1,19 @@
+plugins:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "packages/**"
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/package-lock.json"
+          - "package-lock.json"
+          - "pnpm-lock.yaml"
