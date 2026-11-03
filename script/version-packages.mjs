@@ -4,7 +4,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execFileSync } from "node:child_process";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const [plugin, version] = process.argv.slice(2);
@@ -36,10 +35,14 @@ write("package.json", pkg);
 write("manifest.json", manifest);
 write("versions.json", versions);
 
-execFileSync(
-  "npm",
-  ["install", "--package-lock-only", "--workspaces=false", "--ignore-scripts", "--no-audit", "--no-fund"],
-  { cwd: dir, stdio: "inherit" },
-);
+// Re-resolving peers here fails on unrelated conflicts, so mirror only the
+// version fields that npm ci reads back.
+const lockPath = join(dir, "package-lock.json");
+if (existsSync(lockPath)) {
+  const lock = JSON.parse(readFileSync(lockPath, "utf8"));
+  lock.version = version;
+  if (lock.packages && lock.packages[""]) lock.packages[""].version = version;
+  write("package-lock.json", lock);
+}
 
 console.log(basename(dir) + " -> " + version + " (minAppVersion " + manifest.minAppVersion + ")");

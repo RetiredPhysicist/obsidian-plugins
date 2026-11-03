@@ -15,5 +15,4 @@ dependencies:
   - changed-files:
       - any-glob-to-any-file:
           - "**/package-lock.json"
-          - "package-lock.json"
           - "pnpm-lock.yaml"
