@@ -15,19 +15,13 @@ Releases are tagged per plugin — `auto-move-v0.1.0`, `auto-tag-v0.1.0` — so 
 
 ## Release
 
-**Preferred:** [Changesets](https://github.com/changesets/changesets). From the repo root (after `npm ci --workspaces=false`):
+Obsidian loads a plugin only when its tag, `package.json`, `manifest.json`, and `versions.json` entry agree. `script/version-packages.mjs` writes all four files at once, then you push the tag:
 
 ```bash
-npx changeset          # pick packages + bump type; commit .changeset/*.md in your PR
-```
-
-On merge to `main`, `.github/workflows/changeset-release.yml` opens a **Version Packages** PR (bumps `package.json` and syncs `manifest.json` / `versions.json`). Merge that PR, then ship with a tag (Obsidian installs from GitHub Releases, not npm). The root `package.json` is private and only exists so Changesets can discover `packages/*`; day-to-day work is still `cd packages/<pkg> && npm ci`.
-
-**Fallback (unchanged):** bump `version` in the package's `package.json`, `manifest.json` and `versions.json`, commit, then push the tag:
-
-```bash
-git tag auto-move-v0.1.0
-git push origin auto-move-v0.1.0
+node script/version-packages.mjs auto-move 0.1.1   # or auto-tag
+git add packages/auto-move && git commit -m "release(auto-move): 0.1.1"
+git tag auto-move-v0.1.1
+git push origin auto-move-v0.1.1
 ```
 
 The existing `.github/workflows/release.yml` builds from source and fails when the committed bundle, the three version files and the tag disagree, so a tag cannot ship a stale or mislabelled build.

@@ -5,13 +5,15 @@ each keeps its own npm name, `manifest.json`, and version.
 
 ## Release a package
 
-Preferred: Changesets from the repo root (`npm ci --workspaces=false`, then
-`npx changeset`). Merging to `main` lets `.github/workflows/changeset-release.yml`
-open a Version Packages PR (also syncs `manifest.json` / `versions.json`).
-After that PR merges, tag `auto-<plugin>-v<version>` and push — Obsidian ships
-from GitHub Releases, not npm.
+`script/version-packages.mjs` writes the same version into `package.json`,
+`manifest.json`, `versions.json`, and the package lock, so they cannot drift:
 
-Fallback (unchanged): bump the three version files yourself, then:
+```bash
+node script/version-packages.mjs auto-move 0.1.1   # or auto-tag
+```
+
+Commit that, then tag `auto-<plugin>-v<version>` and push — Obsidian ships
+from GitHub Releases, not npm.
 
 ```bash
 git tag auto-move-v0.1.0   # or auto-tag-v0.1.0
