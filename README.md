@@ -1,5 +1,8 @@
 # obsidian-plugins
 
+[![CI](https://github.com/RetiredPhysicist/obsidian-plugins/actions/workflows/ci.yml/badge.svg)](https://github.com/RetiredPhysicist/obsidian-plugins/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
+
 Two [Obsidian](https://obsidian.md) plugins that use [System One](https://systemone.ai) to judge files in a vault. Each lives in its own package with its own manifest, so they install and update independently.
 
 | Package | Plugin id | What it does |
